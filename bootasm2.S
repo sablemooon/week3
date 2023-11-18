@@ -47,20 +47,21 @@ cons_writeline:
 #
 # Input:  BX = Value to output	
 
-HexChars:	.ascii "0123456789ABCDEF"
+HexChars:    .ascii "0123456789ABCDEF"
 
 cons_write_hex:
-	movw	$4, %cx
-    movb    $0x0E, %ah
-	
+    movw    $4, %cx             # Set the loop counter to 4 (number of hexadecimal digits)
+    movb    $0x0E, %ah          # BIOS function to output a character
+
 hexloop:
-    rol     $4, %bx
-    movw    %bx, %si
-    and     $0x000F, %si
-    movb    HexChars(%si), %al
-	int		$0x10
-	loop	hexloop
-	ret
+    rol     $4, %bx             # Rotate the bits in BX to the left by 4 positions
+    movw    %bx, %si            # Move the rotated value to SI for masking
+    and     $0x000F, %si        # Mask the lower 4 bits to get the hexadecimal digit
+    movb    HexChars(%si), %al  # Get the corresponding hexadecimal character
+    int     $0x10               # Output the character to the console
+    loop    hexloop             # Repeat the loop until CX becomes 0
+    ret                         # Return from the function
+
 
 # Output the value in BX as an unsigned integer
 #
@@ -104,6 +105,9 @@ real_start:
 harddrive:
     movw    $hd, %si
 
+floppydisk:
+    movw $fd, %si
+
 finish:
     call    cons_writeline
 
@@ -127,6 +131,9 @@ finish:
     movw    $0, %bx
     call    cons_write_int
     call    cons_write_crlf
+    call    hexloop
+    call    cons_write_crlf
+    call    getdigit
 
 endless_loop:                   # Loop forever more
     jmp     endless_loop    
